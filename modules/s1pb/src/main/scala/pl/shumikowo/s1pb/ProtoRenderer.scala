@@ -1,6 +1,6 @@
 package pl.shumikowo.s1pb
 
-import Protobuf._
+import pl.shumikowo.s1pb.ProtobufTypes._
 
 class ProtoRenderer(protoPackage: String, javaPackage: String, javaClassName: String, additional: String = "") {
 
