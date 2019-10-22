@@ -4,6 +4,7 @@ import com.google.protobuf.{CodedInputStream, CodedOutputStream}
 import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragment
 import org.specs2.specification.{AfterAll, BeforeEach}
+import pl.shumikowo.s1pb.Models.SealedCase1
 import pl.shumikowo.s1pb.{ProtoCodec, Protobuf, Models => m, generated => g}
 import scalapb.{GeneratedMessage, GeneratedMessageCompanion, Message}
 
@@ -44,6 +45,27 @@ class CompatibilityTest extends Specification with BeforeEach with AfterAll {
     test(
       m.WithOptions(None, Some(7), None, Some(m.SimpleObject(8))),
       g.WithOptions(0, 7, None, Some(g.SimpleObject(8)))
+    )
+  }
+
+  "Top level sealed traits 1" should {
+    test(
+      m.SealedCase1(42, "42").asInstanceOf[m.Sealed],
+      g.Sealed(g.Sealed.Alternatives.SealedCase1Field(g.SealedCase1(42, "42")))
+    )
+  }
+
+  "Top level sealed traits 2" should {
+    test(
+      m.SealedCase2(42, "42").asInstanceOf[m.Sealed],
+      g.Sealed(g.Sealed.Alternatives.SealedCase2Field(g.SealedCase2(42, "42")))
+    )
+  }
+
+  "Sealed traits inside case classes" should {
+    test(
+      m.WithSealed(m.Sealed2Case2(42, "42")),
+      g.WithSealed(Some(g.Sealed2(g.Sealed2.Alternatives.Sealed2Case2Field(g.Sealed2Case2(42, "42")))))
     )
   }
 

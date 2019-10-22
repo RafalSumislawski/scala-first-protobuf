@@ -15,4 +15,15 @@ object Models {
 
   case class WithOptions(o1: Option[Int], o2: Option[Int], o3: Option[SimpleObject], o4: Option[SimpleObject])
   case class SimpleObject(i: Int)
+
+  sealed trait Sealed
+  case class SealedCase1(i: Int, s: String) extends Sealed
+  case class SealedCase2(i: Int, s: String) extends Sealed
+
+  case class WithSealed(s: Sealed2)
+  sealed trait Sealed2
+  case class Sealed2Case1(i: Int, s: String) extends Sealed2
+  case class Sealed2Case2(i: Int, s: String) extends Sealed2
+
+
 }
