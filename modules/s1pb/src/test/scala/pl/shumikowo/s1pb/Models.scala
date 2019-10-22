@@ -12,4 +12,7 @@ object Models {
 
   case class WithValueType(v: ValueType)
   case class ValueType(i: Int) extends AnyVal
+
+  case class WithOptions(o1: Option[Int], o2: Option[Int], o3: Option[SimpleObject], o4: Option[SimpleObject])
+  case class SimpleObject(i: Int)
 }

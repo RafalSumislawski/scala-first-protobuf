@@ -1,6 +1,6 @@
 package pl.shumikowo.s1pb
 
-import pl.shumikowo.s1pb.Models.{NestedProducts, SimpleTypes, WithSequence, WithValueType}
+import pl.shumikowo.s1pb.Models.{NestedProducts, SimpleTypes, WithOptions, WithSequence, WithValueType}
 
 class GenerateProtoDefinitions extends Spec {
 
@@ -23,6 +23,11 @@ class GenerateProtoDefinitions extends Spec {
 
     "WithSequence" in {
       saveProtoDefinition[WithSequence]("WithSequence")
+      ok
+    }
+
+    "WithOptions" in {
+      saveProtoDefinition[WithOptions]("WithOptions")
       ok
     }
   }

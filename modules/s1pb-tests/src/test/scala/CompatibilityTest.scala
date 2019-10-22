@@ -21,8 +21,8 @@ class CompatibilityTest extends Specification with BeforeEach with AfterAll {
 
   "Nested products" should {
     test(
-      m.NestedProducts(m.InnerNestedProducts(m.BottomNestedProduct(1,2), m.BottomNestedProduct(3,4)), m.InnerNestedProducts(m.BottomNestedProduct(5,6), m.BottomNestedProduct(7,8))),
-      g.NestedProducts(Some(g.InnerNestedProducts(Some(g.BottomNestedProduct(1,2)), Some(g.BottomNestedProduct(3,4)))), Some(g.InnerNestedProducts(Some(g.BottomNestedProduct(5,6)), Some(g.BottomNestedProduct(7,8))))),
+      m.NestedProducts(m.InnerNestedProducts(m.BottomNestedProduct(1, 2), m.BottomNestedProduct(3, 4)), m.InnerNestedProducts(m.BottomNestedProduct(5, 6), m.BottomNestedProduct(7, 8))),
+      g.NestedProducts(Some(g.InnerNestedProducts(Some(g.BottomNestedProduct(1, 2)), Some(g.BottomNestedProduct(3, 4)))), Some(g.InnerNestedProducts(Some(g.BottomNestedProduct(5, 6)), Some(g.BottomNestedProduct(7, 8))))),
     )
   }
 
@@ -37,6 +37,13 @@ class CompatibilityTest extends Specification with BeforeEach with AfterAll {
     test(
       m.WithSequence(Seq("a", "b"), Vector("e", "f"), List("c", "d")),
       g.WithSequence(Seq("a", "b"), Vector("e", "f"), List("c", "d"))
+    )
+  }
+
+  "Options" should {
+    test(
+      m.WithOptions(None, Some(7), None, Some(m.SimpleObject(8))),
+      g.WithOptions(0, 7, None, Some(g.SimpleObject(8)))
     )
   }
 

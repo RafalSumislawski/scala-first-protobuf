@@ -1,13 +1,12 @@
 package pl.shumikowo.s1pb
 
-import java.nio.charset.{CharsetEncoder, StandardCharsets}
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 
 import com.google.protobuf.{CodedInputStream, WireFormat}
 import magnolia.{CaseClass, Magnolia, Param, TypeName}
 import pl.shumikowo.s1pb.Protobuf._
 
-import scala.collection.immutable.VectorBuilder
 import scala.collection.mutable
 import scala.language.experimental.macros
 
@@ -91,7 +90,17 @@ object Protobuf {
     override def read(in:  CodedInputStream): Instant = Instant.ofEpochMilli(in.readInt64())
   }
 
-  implicit def protobufferifyOption[T](implicit T: Protobuf[T]): Protobuf[Option[T]] = T.asInstanceOf[Protobuf[Option[T]]]
+  implicit def protobufferifyOption[T](implicit T: Protobuf[T]): Protobuf[Option[T]] = new ProtobufOption(T)
+
+  class ProtobufOption[T](val protobufNested: Protobuf[T]) extends Protobuf[Option[T]]{
+    override def repeated: Boolean = protobufNested.repeated
+    override def wireType: WireType = protobufNested.wireType
+    override def protobufType: ProtobufType = protobufNested.protobufType
+    override def messageModel: Option[ProtobufModel] = protobufNested.messageModel
+    override def requiredModelsGen(alreadyKnown:  Set[TypeName]): Set[ProtobufModel] = protobufNested.requiredModelsGen(alreadyKnown)
+    override def write(out: Output, value: Option[T]): Unit = ???
+    override def read(in: CodedInputStream): Option[T] = ???
+  }
 
   implicit def protobufferifyVector[T](implicit T: Protobuf[T]): Protobuf[Vector[T]] = new ProtobufSeq(T, () => Vector.newBuilder[T])
 
@@ -156,15 +165,23 @@ object Protobuf {
         while(i < params.length){
           val param = params(i)
           val index = positionToIndex(i)
+          val paramValue = param.dereference(value)
           param.typeclass match {
             case seq if seq.isInstanceOf[ProtobufSeq[_, _]] =>
               // TODO compressed arrays
               val protobufElement = seq.asInstanceOf[ProtobufSeq[_, Any]].protobufElement
-              param.dereference(value).asInstanceOf[Seq[_]].foreach{ element =>
+              paramValue.asInstanceOf[Seq[_]].foreach{ element =>
                 writeField(out, index, protobufElement, element)
               }
+
+            case option if option.isInstanceOf[ProtobufOption[_]] =>
+              paramValue.asInstanceOf[Option[Any]] match{
+                case Some(e) => writeField(out, index, option.asInstanceOf[ProtobufOption[Any]].protobufNested, e)
+                case None =>
+              }
+
             case other =>
-              writeField(out, index, other.asInstanceOf[Protobuf[Any]], param.dereference(value))
+              writeField(out, index, other.asInstanceOf[Protobuf[Any]], paramValue)
           }
           i += 1
         }
@@ -205,6 +222,8 @@ object Protobuf {
                   } else {
                     currentValue.asInstanceOf[mutable.Builder[Any,_]] += elem
                   }
+                case seq if seq.isInstanceOf[ProtobufOption[_]] =>
+                  fields(position) = Some(readField(in, seq.asInstanceOf[ProtobufOption[Any]].protobufNested))
                 case other =>
                   fields(position) = readField(in, other)
               }
@@ -215,8 +234,10 @@ object Protobuf {
         var i = 0
         while(i < fields.length){
           val current = fields(i)
+          val param = params(i)
           current match {
-            case b: mutable.Builder[_, _] => fields(i) = b.result()
+            case b: mutable.Builder[_, _] if param.typeclass.isInstanceOf[ProtobufSeq[_, _]]=> fields(i) = b.result()
+            case null if param.typeclass.isInstanceOf[ProtobufOption[_]] => fields(i) = None
             case _ =>
           }
           i += 1
