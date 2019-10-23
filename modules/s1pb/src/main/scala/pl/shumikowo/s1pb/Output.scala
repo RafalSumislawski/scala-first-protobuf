@@ -52,6 +52,12 @@ class Output() {
     t.flush()
   }
 
+  def writeStringNoTag(string: String): Unit = {
+    val t = onTail
+    t.writeStringNoTag(string)
+    t.flush()
+  }
+
   def write(b: Array[Byte]): Unit = {
     val t = onTail
     t.write(b, 0, b.length)

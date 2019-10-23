@@ -3,7 +3,7 @@ import Dependencies._
 name := "scala-first-protobuf-parent"
 ThisBuild / organization := "pl.shumikowo.s1pb"
 
-ThisBuild / version := "0.1.0-SNAPSHOT"
+ThisBuild / version := "0.1.2"
 ThisBuild / scalaVersion := "2.12.10"
 
 Global / cancelable := true
@@ -12,7 +12,7 @@ lazy val commonSettings = Seq(
   Compile / packageDoc / publishArtifact := false,
   Test / packageBin / publishArtifact := false,
 
-  crossPaths := false,
+  crossPaths := true,
   update / aggregate := false,
   update / evictionWarningOptions := EvictionWarningOptions.default
     .withWarnTransitiveEvictions(false)

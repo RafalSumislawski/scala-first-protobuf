@@ -5,6 +5,7 @@ import java.time.Instant
 
 import com.google.protobuf.{CodedInputStream, WireFormat}
 import magnolia.{CaseClass, Magnolia, Param, SealedTrait, Subtype, TypeName}
+import pl.shumikowo.s1pb.Protobuf.TransformedProtobuf
 import pl.shumikowo.s1pb.ProtobufTypes.{ProtobufField, ProtobufModel, ProtobufProduct, ProtobufSum, ProtobufType}
 import pl.shumikowo.s1pb.WireType._
 
@@ -32,6 +33,9 @@ trait Protobuf[T] {
   def write(out: Output, value: T): Unit
 
   def read(in: CodedInputStream): T
+
+  def transform[T2](transform: T => T2, reverse: T2 => T): Protobuf[T2] =
+    new TransformedProtobuf[T, T2](this, transform, reverse)
 
 }
 
@@ -293,5 +297,15 @@ object Protobuf {
   }
 
   implicit def gen[T]: Protobuf[T] = macro Magnolia.gen[T]
+
+  class TransformedProtobuf[T, T2](base: Protobuf[T], transform: T => T2, reverse: T2 => T) extends Protobuf[T2]{
+    override def repeated: Boolean = base.repeated
+    override def wireType: WireType = base.wireType
+    override def protobufType: ProtobufType = base.protobufType
+    override def messageModel: Option[ProtobufModel] = base.messageModel
+    override def requiredModelsGen(alreadyKnown:  Set[TypeName]): Set[ProtobufModel] = base.requiredModelsGen(alreadyKnown)
+    override def write(out: Output, value: T2): Unit = base.write(out, reverse(value))
+    override def read(in: CodedInputStream): T2 = transform(base.read(in))
+  }
 
 }
