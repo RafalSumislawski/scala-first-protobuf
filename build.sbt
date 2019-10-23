@@ -3,7 +3,7 @@ import Dependencies._
 name := "scala-first-protobuf-parent"
 ThisBuild / organization := "pl.shumikowo.s1pb"
 
-ThisBuild / version := "0.1.2"
+ThisBuild / version := "0.1.3"
 ThisBuild / scalaVersion := "2.12.10"
 
 Global / cancelable := true
