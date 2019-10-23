@@ -4,9 +4,9 @@ import java.nio.charset.StandardCharsets
 import java.time.Instant
 
 import com.google.protobuf.{CodedInputStream, WireFormat}
-import magnolia.{CaseClass, Magnolia, Param, SealedTrait, Subtype, TypeName}
-import pl.shumikowo.s1pb.Protobuf.TransformedProtobuf
-import pl.shumikowo.s1pb.ProtobufTypes.{ProtobufField, ProtobufModel, ProtobufProduct, ProtobufSum, ProtobufType}
+import magnolia._
+import pl.shumikowo.s1pb.Protobuf.{TransformedProtobuf, TransformedRepeatedProtobuf}
+import pl.shumikowo.s1pb.ProtobufTypes._
 import pl.shumikowo.s1pb.WireType._
 
 import scala.collection.mutable
@@ -17,7 +17,7 @@ trait Protobuf[T] {
   def repeated: Boolean = false
 
   // TODO try to bind together wireType, protobufType, and, messageModel
-  
+
   def wireType: WireType
 
   def protobufType: ProtobufType
@@ -37,6 +37,24 @@ trait Protobuf[T] {
   def transform[T2](transform: T => T2, reverse: T2 => T): Protobuf[T2] =
     new TransformedProtobuf[T, T2](this, transform, reverse)
 
+}
+
+trait RepeatedProtobuf[T, E] extends Protobuf[T] {
+
+  def protobufElement: Protobuf[E]
+
+  def builder: () => mutable.Builder[E, T]
+
+  def forEach(t: T, f: E => Unit): Unit
+
+  override def repeated: Boolean = true
+
+  override def write(out: Output, value: T): Unit = ??? // TODO nice error
+
+  override def read(in: CodedInputStream): T = ??? // TODO nice error
+
+  override def transform[T2](transform: T => T2, reverse: T2 => T): Protobuf[T2] =
+    new TransformedRepeatedProtobuf[T, T2, E](this, transform, reverse)
 }
 
 object Protobuf {
@@ -93,20 +111,28 @@ object Protobuf {
     override def read(in: CodedInputStream): Option[T] = ???
   }
 
-  implicit def protobufVector[T](implicit T: Protobuf[T]): Protobuf[Vector[T]] = new ProtobufSeq(T, () => Vector.newBuilder[T])
+  implicit def protobufVector[T](implicit T: Protobuf[T]): Protobuf[Vector[T]] = new ProtobufIterable(T, () => Vector.newBuilder[T])
 
-  implicit def protobufList[T](implicit T: Protobuf[T]): Protobuf[List[T]] = new ProtobufSeq(T, () => List.newBuilder[T])
+  implicit def protobufList[T](implicit T: Protobuf[T]): Protobuf[List[T]] = new ProtobufIterable(T, () => List.newBuilder[T])
 
-  implicit def protobufSeq[T](implicit T: Protobuf[T]): Protobuf[Seq[T]] = new ProtobufSeq(T, () => Seq.newBuilder[T])
+  implicit def protobufSeq[T](implicit T: Protobuf[T]): Protobuf[Seq[T]] = new ProtobufIterable(T, () => Seq.newBuilder[T])
 
-  class ProtobufSeq[S <: Seq[T], T](val protobufElement: Protobuf[T], val builder: () => scala.collection.mutable.Builder[T, S]) extends Protobuf[S] {
+  case class MapEntry[K, V](k: K, v: V)
+
+  implicit def protobufMap[K: Protobuf, V: Protobuf]: Protobuf[Map[K, V]] =
+    protobufSeq[MapEntry[K, V]].transform(
+      _.map{case MapEntry(k,v) => (k -> v)}(scala.collection.breakOut),
+      _.map{case (k, v) => MapEntry(k, v)}(scala.collection.breakOut)
+    )
+
+  class ProtobufIterable[T <: scala.collection.Iterable[E], E](val protobufElement: Protobuf[E], val builder: () => mutable.Builder[E, T])
+    extends RepeatedProtobuf[T, E]{
     override def repeated: Boolean = true
-    override def wireType: WireType = LengthDelimited // ???
+    override def wireType: WireType = LengthDelimited
     override def protobufType: ProtobufType = protobufElement.protobufType
     override def messageModel: Option[ProtobufModel] = protobufElement.messageModel
     override def requiredModelsGen(alreadyKnown:  Set[TypeName]): Set[ProtobufModel] = protobufElement.requiredModelsGen(alreadyKnown)
-    override def write(out: Output, value: S): Unit = ???
-    override def read(in: CodedInputStream): S = ???
+    override def forEach(t: T, f: E => Unit): Unit = t.foreach(f)
   }
 
   def combine[T](ctx: CaseClass[Protobuf, T]): Protobuf[T] =
@@ -147,12 +173,10 @@ object Protobuf {
           val index = positionToIndex(i)
           val paramValue = param.dereference(value)
           param.typeclass match {
-            case seq if seq.isInstanceOf[ProtobufSeq[_, _]] =>
+            case seq if seq.isInstanceOf[RepeatedProtobuf[_, _]] =>
               // TODO compressed arrays
-              val protobufElement = seq.asInstanceOf[ProtobufSeq[_, Any]].protobufElement
-              paramValue.asInstanceOf[Seq[_]].foreach{ element =>
-                writeField(out, index, protobufElement, element)
-              }
+              val seq2 = seq.asInstanceOf[RepeatedProtobuf[Any, Any]]
+              seq2.forEach(paramValue.asInstanceOf[Any],  element => writeField(out, index, seq2.protobufElement, element))
 
             case option if option.isInstanceOf[ProtobufOption[_]] =>
               paramValue.asInstanceOf[Option[Any]] match{
@@ -180,9 +204,9 @@ object Protobuf {
                 throw new RuntimeException(s"Something's wrong with the schema. Expected wireType=[${param.typeclass.wireType.asInt}] at index [$index], instead got [$wireType]")
               }
               param.typeclass match {
-                case seq if seq.isInstanceOf[ProtobufSeq[_, _]] =>
+                case seq if seq.repeated =>
                   // TODO compressed arrays
-                  val seq2 = seq.asInstanceOf[ProtobufSeq[_, Any]]
+                  val seq2 = seq.asInstanceOf[RepeatedProtobuf[_, Any]]
                   val elem = readField(in, seq2.protobufElement)
                   val currentValue = fields(position)
                   if(currentValue == null) {
@@ -204,7 +228,7 @@ object Protobuf {
           val current = fields(i)
           val param = params(i)
           current match {
-            case b: mutable.Builder[_, _] if param.typeclass.isInstanceOf[ProtobufSeq[_, _]]=> fields(i) = b.result()
+            case b: mutable.Builder[_, _] if param.typeclass.isInstanceOf[RepeatedProtobuf[_, _]] => fields(i) = b.result()
             case null if param.typeclass.isInstanceOf[ProtobufOption[_]] => fields(i) = None
             case _ =>
           }
@@ -308,4 +332,17 @@ object Protobuf {
     override def read(in: CodedInputStream): T2 = transform(base.read(in))
   }
 
+  class TransformedRepeatedProtobuf[S, S2, T](base: RepeatedProtobuf[S, T], transform: S => S2, reverse: S2 => S)
+    extends RepeatedProtobuf[S2, T]{
+    override def repeated: Boolean = base.repeated
+    override def wireType: WireType = base.wireType
+    override def protobufType: ProtobufType = base.protobufType
+    override def messageModel: Option[ProtobufModel] = base.messageModel
+    override def requiredModelsGen(alreadyKnown:  Set[TypeName]): Set[ProtobufModel] = base.requiredModelsGen(alreadyKnown)
+    override def write(out: Output, value: S2): Unit = base.write(out, reverse(value))
+    override def read(in: CodedInputStream): S2 = transform(base.read(in))
+    override def protobufElement: Typeclass[T] = base.protobufElement
+    override def builder: () => mutable.Builder[T, S2] = () => base.builder().mapResult(transform)
+    override def forEach(t: S2, f: T => Unit): Unit = base.forEach(reverse(t), f)
+  }
 }

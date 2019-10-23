@@ -25,5 +25,6 @@ object Models {
   case class Sealed2Case1(i: Int, s: String) extends Sealed2
   case class Sealed2Case2(i: Int, s: String) extends Sealed2
 
+  case class WithMap(m: Map[String, Int])
 
 }

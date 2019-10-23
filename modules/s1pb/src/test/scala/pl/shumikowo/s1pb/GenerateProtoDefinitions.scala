@@ -1,7 +1,7 @@
 package pl.shumikowo.s1pb
 
 import org.specs2.specification.core.Fragment
-import pl.shumikowo.s1pb.Models.{NestedProducts, Sealed, SimpleTypes, WithOptions, WithSealed, WithSequence, WithValueType}
+import pl.shumikowo.s1pb.Models.{NestedProducts, Sealed, SimpleTypes, WithMap, WithOptions, WithSealed, WithSequence, WithValueType}
 
 class GenerateProtoDefinitions extends Spec {
 
@@ -13,6 +13,7 @@ class GenerateProtoDefinitions extends Spec {
     saveProtoDefinition[WithOptions]("WithOptions")
     saveProtoDefinition[Sealed]("Sealed")
     saveProtoDefinition[WithSealed]("WithSealed")
+    saveProtoDefinition[WithMap]("WithMap")
   }
 
   private def saveProtoDefinition[T: Protobuf](name: String): Fragment = {

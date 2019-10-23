@@ -4,7 +4,7 @@ import com.google.protobuf.{CodedInputStream, CodedOutputStream}
 import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragment
 import org.specs2.specification.{AfterAll, BeforeEach}
-import pl.shumikowo.s1pb.Models.SealedCase1
+import pl.shumikowo.s1pb.Protobuf.MapEntry
 import pl.shumikowo.s1pb.{ProtoCodec, Protobuf, Models => m, generated => g}
 import scalapb.{GeneratedMessage, GeneratedMessageCompanion, Message}
 
@@ -66,6 +66,13 @@ class CompatibilityTest extends Specification with BeforeEach with AfterAll {
     test(
       m.WithSealed(m.Sealed2Case2(42, "42")),
       g.WithSealed(Some(g.Sealed2(g.Sealed2.Alternatives.Sealed2Case2Field(g.Sealed2Case2(42, "42")))))
+    )
+  }
+
+  "Maps" should {
+    test(
+      m.WithMap(Map("42" -> 42, "17" -> 17)),
+      g.WithMap(Seq(g.MapEntry("42", 42), g.MapEntry("17", 17)))
     )
   }
 
