@@ -143,6 +143,13 @@ object Protobuf {
     override def forEach(t: T, f: E => Unit): Unit = t.foreach(f)
   }
 
+  implicit object protobufArrayOfBytes extends Protobuf[Array[Byte]] {
+    override def wireType: WireType = LengthDelimited
+    override def protobufType: ProtobufType = "bytes"
+    override def write(out: Output, value: Array[Byte]): Unit = out.write(value)
+    override def read(in: CodedInputStream): Array[Byte] = in.readRawBytes(in.getBytesUntilLimit)
+  }
+
   implicit def protobufArray[T: ClassTag](implicit T: Protobuf[T]): Protobuf[Array[T]] = new ProtobufArray(T, () => Array.newBuilder[T])
 
   class ProtobufArray[T <: Array[E], E](val protobufElement: Protobuf[E], val builder: () => mutable.Builder[E, T])

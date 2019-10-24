@@ -4,7 +4,7 @@ import java.nio.ByteBuffer
 
 import cats.implicits._
 import cats.kernel.Eq
-import com.google.protobuf.{CodedInputStream, CodedOutputStream}
+import com.google.protobuf.{ByteString, CodedInputStream, CodedOutputStream}
 import org.specs2.matcher.describe.{Diffable, PrimitiveDifference, PrimitiveIdentical}
 import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragment
@@ -21,6 +21,7 @@ class CompatibilityTest extends Specification with BeforeEach with AfterAll {
 
   implicit def eqMap[K, V] = Eq.fromUniversalEquals[Map[K, V]]
   implicit def eqSeq[T] = Eq.fromUniversalEquals[Seq[T]]
+  implicit def eqByteString = Eq.fromUniversalEquals[ByteString]
   implicit def eqArray[T] = Eq.instance[Array[T]]((a, b) => a.toSeq == b.toSeq)
 
   val s1pb = new ProtoCodec()
@@ -91,7 +92,7 @@ class CompatibilityTest extends Specification with BeforeEach with AfterAll {
   "Arrays" should {
     test(
       m.WithArrays(Array[Byte](1, 2, 3), Array[Int](1, 2, 3), Array[String]("a", "b", "c")),
-      g.WithArrays(Seq[Int](1, 2, 3), Seq[Int](1, 2, 3), Seq[String]("a", "b", "c")),
+      g.WithArrays(ByteString.copyFrom(Array[Byte](1, 2, 3)), Seq[Int](1, 2, 3), Seq[String]("a", "b", "c")),
     )
   }
 
