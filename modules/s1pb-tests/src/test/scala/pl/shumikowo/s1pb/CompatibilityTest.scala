@@ -1,15 +1,27 @@
+package pl.shumikowo.s1pb
+
 import java.nio.ByteBuffer
 
+import cats.implicits._
+import cats.kernel.Eq
 import com.google.protobuf.{CodedInputStream, CodedOutputStream}
+import org.specs2.matcher.describe.{Diffable, PrimitiveDifference, PrimitiveIdentical}
 import org.specs2.mutable.Specification
 import org.specs2.specification.core.Fragment
 import org.specs2.specification.{AfterAll, BeforeEach}
-import pl.shumikowo.s1pb.Protobuf.MapEntry
-import pl.shumikowo.s1pb.{ProtoCodec, Protobuf, Models => m, generated => g}
+import pl.shumikowo.s1pb.{Models => m, generated => g}
 import scalapb.{GeneratedMessage, GeneratedMessageCompanion, Message}
 
 class CompatibilityTest extends Specification with BeforeEach with AfterAll {
   sequential
+
+  implicitly[Eq[Int]] // Dear IntelliJ please don't remove my import cats.implicits._ . I need the Eq instances.
+
+  import AutoEq._
+
+  implicit def eqMap[K, V] = Eq.fromUniversalEquals[Map[K, V]]
+  implicit def eqSeq[T] = Eq.fromUniversalEquals[Seq[T]]
+  implicit def eqArray[T] = Eq.instance[Array[T]]((a, b) => a.toSeq == b.toSeq)
 
   val s1pb = new ProtoCodec()
 
@@ -76,7 +88,14 @@ class CompatibilityTest extends Specification with BeforeEach with AfterAll {
     )
   }
 
-  private def test[M: Protobuf, G <: GeneratedMessage with Message[G] : GeneratedMessageCompanion](m1: M, g1: G): Fragment = {
+  "Arrays" should {
+    test(
+      m.WithArrays(Array[Byte](1, 2, 3), Array[Int](1, 2, 3), Array[String]("a", "b", "c")),
+      g.WithArrays(Seq[Int](1, 2, 3), Seq[Int](1, 2, 3), Seq[String]("a", "b", "c")),
+    )
+  }
+
+  private def test[M: Protobuf : Eq, G <: GeneratedMessage with Message[G] : GeneratedMessageCompanion : Eq](m1: M, g1: G): Fragment = {
     s"model --protobuf--> model " in {
       log(s"starting with model $m1")
       val e = s1pb.encode(m1)
@@ -85,7 +104,7 @@ class CompatibilityTest extends Specification with BeforeEach with AfterAll {
       val m2 = s1pb.decode[M](e)
       log(s"and decoded to $m2")
 
-      m2 must_== m1
+      m2 must_=== m1
     }
 
     "model --protobuf--> scalapb " in {
@@ -96,7 +115,7 @@ class CompatibilityTest extends Specification with BeforeEach with AfterAll {
       val g2 = implicitly[GeneratedMessageCompanion[G]].parseFrom(CodedInputStream.newInstance(e))
       log(s"and decoded to $g2")
 
-      g2 must_== g1
+      g2 must_=== g1
     }
 
     "scalapb --protobuf--> model" in {
@@ -110,7 +129,7 @@ class CompatibilityTest extends Specification with BeforeEach with AfterAll {
       val m2 = s1pb.decode[M](e)
       log(s"and decoded to $m2")
 
-      m2 must_== m1
+      m2 must_=== m1
     }
   }
 
@@ -134,4 +153,9 @@ class CompatibilityTest extends Specification with BeforeEach with AfterAll {
     logs.foreach(println)
     logs = Vector.empty[String]
   }
+
+  implicit def diffable[T: Eq]: Diffable[T] =
+    (actual: T, expected: T) =>
+      if (actual === expected) PrimitiveIdentical(actual)
+      else PrimitiveDifference(actual, expected)
 }

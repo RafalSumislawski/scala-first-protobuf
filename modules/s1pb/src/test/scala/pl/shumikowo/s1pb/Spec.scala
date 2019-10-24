@@ -2,7 +2,6 @@ package pl.shumikowo.s1pb
 
 import java.nio.file.{Files, Paths}
 import java.util
-import java.util.concurrent.ThreadLocalRandom
 
 import com.typesafe.scalalogging.StrictLogging
 import org.apache.commons

@@ -27,4 +27,6 @@ object Models {
 
   case class WithMap(m: Map[String, Int])
 
+  case class WithArrays(bytes: Array[Byte], ints: Array[Int], strings: Array[String])
+
 }

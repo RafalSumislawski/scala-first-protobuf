@@ -1,4 +1,3 @@
-import sbt.Keys.libraryDependencies
 import sbt._
 
 object Dependencies {
@@ -19,5 +18,8 @@ object Dependencies {
   val specsCore = "org.specs2" %% "specs2-core" % specs2Version
   val specsScalaCheck = "org.specs2" %% "specs2-scalacheck" % specs2Version
   val allSpecs = Seq(specsCore, specsScalaCheck)
+
+  val cats = "org.typelevel" %% "cats-core" % "2.0.0"
+  val allCats = Seq(cats)
 
 }
