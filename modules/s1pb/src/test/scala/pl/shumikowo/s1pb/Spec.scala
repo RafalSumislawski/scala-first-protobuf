@@ -14,6 +14,7 @@ trait Spec extends Specification with StrictLogging {
     val protoFilePath = targetDir.resolve(s"$name.proto")
     logger.debug(s"Proto file $protoFilePath")
     Files.write(protoFilePath, util.Arrays.asList(content))
+    ()
   }
 }
 

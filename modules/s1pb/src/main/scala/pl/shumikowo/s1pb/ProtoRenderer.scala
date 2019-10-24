@@ -16,6 +16,8 @@ class ProtoRenderer(protoPackage: String, javaPackage: String, javaClassName: St
         |
         |package $protoPackage;
         |
+        |$additional
+        |
         |""".stripMargin
     val models = messages.flatMap(pb => pb.messageModel ++ pb.requiredModels).toSet
 

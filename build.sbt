@@ -3,7 +3,7 @@ import Dependencies._
 name := "scala-first-protobuf-parent"
 ThisBuild / organization := "pl.shumikowo.s1pb"
 
-ThisBuild / version := "0.1.3"
+ThisBuild / version := "0.1.4"
 ThisBuild / scalaVersion := "2.12.10"
 
 Global / cancelable := true
@@ -18,18 +18,7 @@ lazy val commonSettings = Seq(
     .withWarnTransitiveEvictions(false)
     .withWarnDirectEvictions(false),
 
-  // Compilation options
-  scalacOptions ++= Seq(
-    "-target:jvm-1.8",
-    "-encoding", "UTF-8",
-    "-unchecked",
-    "-deprecation",
-    "-Xfuture",
-//    "-Ywarn-unused",
-    "-Xfatal-warnings",
-    "-language:higherKinds",
-    "Ypartial-unification"
-  ),
+  scalacOptions ++= ScalacOptions.options,
 )
 
 addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full)
