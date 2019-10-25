@@ -58,6 +58,18 @@ class Output() {
     t.flush()
   }
 
+  def writeFloatNoTag(float: Float): Unit = {
+    val t = onTail
+    t.writeFloatNoTag(float)
+    t.flush()
+  }
+
+  def writeDoubleNoTag(double: Double): Unit = {
+    val t = onTail
+    t.writeDoubleNoTag(double)
+    t.flush()
+  }
+
   def write(b: Array[Byte]): Unit = {
     val t = onTail
     t.write(b, 0, b.length)

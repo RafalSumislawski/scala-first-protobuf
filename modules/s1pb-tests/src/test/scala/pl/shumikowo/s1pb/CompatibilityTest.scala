@@ -28,8 +28,8 @@ class CompatibilityTest extends Specification with BeforeEach with AfterAll {
 
   "Products of simple types" should {
     test(
-      m.SimpleTypes(42, 1234567, "test"),
-      g.SimpleTypes(42, 1234567, "test")
+      m.SimpleTypes(42, 1234567, "test", 4.2f, 4.2, 42, 'A'),
+      g.SimpleTypes(42, 1234567, "test", 4.2f, 4.2, 42, 'A')
     )
   }
 
