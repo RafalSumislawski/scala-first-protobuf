@@ -103,6 +103,34 @@ object Protobuf {
     override def read(in: CodedInputStream): String = new String(in.readRawBytes(in.getBytesUntilLimit), StandardCharsets.UTF_8) // TODO reduce allocations
   }
 
+  implicit object ProtobufFloat extends Protobuf[Float] {
+    override def wireType: WireType = Fixed32
+    override def protobufType: ProtobufType = "float"
+    override def write(out: Output, value: Float): Unit = out.writeFloatNoTag(value)
+    override def read(in: CodedInputStream): Float = in.readFloat()
+  }
+
+  implicit object ProtobufDouble extends Protobuf[Double] {
+    override def wireType: WireType = Fixed64
+    override def protobufType: ProtobufType = "double"
+    override def write(out: Output, value: Double): Unit = out.writeDoubleNoTag(value)
+    override def read(in: CodedInputStream): Double = in.readDouble()
+  }
+
+  implicit object ProtobufShort extends Protobuf[Short] {
+    override def wireType: WireType = Varint
+    override def protobufType: ProtobufType = "int32"
+    override def write(out: Output, value: Short): Unit = out.writeInt32NoTag(value)
+    override def read(in: CodedInputStream): Short = in.readInt32().toShort
+  }
+
+  implicit object ProtobufChar extends Protobuf[Char] {
+    override def wireType: WireType = Varint
+    override def protobufType: ProtobufType = "int32"
+    override def write(out: Output, value: Char): Unit = out.writeInt32NoTag(value)
+    override def read(in: CodedInputStream): Char = in.readInt32().toChar
+  }
+
   implicit object ProtobufInstant extends Protobuf[Instant] {
     override def wireType: WireType = Fixed64
     override def protobufType: ProtobufType = "int64"
