@@ -10,6 +10,6 @@ object ProtobufTypes {
 
   case class ProtobufField(typ: ProtobufType, name: String, id: Int, repeated: Boolean = false)
 
-  type ProtobufType = String
+  type ProtobufType = String // TODO give it a better model
 
 }

@@ -49,8 +49,8 @@ class CompatibilityTest extends Specification with BeforeEach with AfterAll {
 
   "Sequence types" should {
     test(
-      m.WithSequence(Seq("a", "b"), Vector("e", "f"), List("c", "d")),
-      g.WithSequence(Seq("a", "b"), Vector("e", "f"), List("c", "d"))
+      m.WithSequence(Seq("a", "b"), Vector("e", "f"), List("c", "d"), List.empty),
+      g.WithSequence(Seq("a", "b"), Vector("e", "f"), List("c", "d"), List.empty)
     )
   }
 
@@ -84,15 +84,15 @@ class CompatibilityTest extends Specification with BeforeEach with AfterAll {
 
   "Maps" should {
     test(
-      m.WithMap(Map("42" -> 42, "17" -> 17)),
-      g.WithMap(Seq(g.MapEntry("42", 42), g.MapEntry("17", 17)))
+      m.WithMap(Map.empty, Map("42" -> 42, "17" -> 17)),
+      g.WithMap(Seq.empty, Seq(g.MapEntry("42", 42), g.MapEntry("17", 17)))
     )
   }
 
   "Arrays" should {
     test(
-      m.WithArrays(Array[Byte](1, 2, 3), Array[Int](1, 2, 3), Array[String]("a", "b", "c")),
-      g.WithArrays(ByteString.copyFrom(Array[Byte](1, 2, 3)), Seq[Int](1, 2, 3), Seq[String]("a", "b", "c")),
+      m.WithArrays(Array[Byte](1, 2, 3), Array[Int](1, 2, 3), Array[String]("a", "b", "c"), Array.empty),
+      g.WithArrays(ByteString.copyFrom(Array[Byte](1, 2, 3)), Seq[Int](1, 2, 3), Seq[String]("a", "b", "c"), Seq.empty),
     )
   }
 

@@ -68,6 +68,11 @@ object Protobuf {
 
   type Typeclass[T] = Protobuf[T]
 
+  // TODO Unit -> Empty
+  // TODO Top level simple types
+  // TODO Top level collections
+  // TODO Any
+
   implicit object ProtobufBoolean extends Protobuf[Boolean] {
     override def wireType: WireType = Varint
     override def protobufType: ProtobufType = "bool"
@@ -251,6 +256,17 @@ object Protobuf {
 
     override def read(in: CodedInputStream): T = {
       val fields = new Array[Any](params.length)
+      var j = 0
+      while (j < params.length) {
+        val param = params(j)
+        param.typeclass match {
+          case p if p.isInstanceOf[RepeatedProtobuf[_, _]] => fields(j) = p.asInstanceOf[RepeatedProtobuf[_, _]].builder()
+          case p if p.isInstanceOf[ProtobufOption[_]] => fields(j) = None
+          case _ => ()
+        }
+        j += 1
+      }
+
       var tag = in.readTag()
       while (tag != 0) {
         val index = WireFormat.getTagFieldNumber(tag)

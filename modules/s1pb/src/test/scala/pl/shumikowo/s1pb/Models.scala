@@ -8,7 +8,7 @@ object Models {
   case class InnerNestedProducts(p1: BottomNestedProduct, p2: BottomNestedProduct)
   case class BottomNestedProduct(i1: Int, i2: Int)
 
-  case class WithSequence(s: Seq[String], v: Vector[String], l: List[String])
+  case class WithSequence(s: Seq[String], v: Vector[String], l: List[String], e: List[String])
 
   case class WithValueType(v: ValueType)
   case class ValueType(i: Int) extends AnyVal
@@ -25,8 +25,8 @@ object Models {
   case class Sealed2Case1(i: Int, s: String) extends Sealed2
   case class Sealed2Case2(i: Int, s: String) extends Sealed2
 
-  case class WithMap(m: Map[String, Int])
+  case class WithMap(m1: Map[String, Int], m2: Map[String, Int])
 
-  case class WithArrays(bytes: Array[Byte], ints: Array[Int], strings: Array[String])
+  case class WithArrays(bytes: Array[Byte], ints: Array[Int], strings: Array[String], empty: Array[Int])
 
 }
